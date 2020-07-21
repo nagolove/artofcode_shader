@@ -31,15 +31,18 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     m = smoothstep(d, d + 0.1, uv.x);
     col += m;
 
+
     return vec4(col, 1.0);
 }
 ]])
+
 local sh3 = gr.newShader([[
 uniform float iTime;
+uniform float iCount;
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
     vec2 uv = screen_coords / love_ScreenSize.xy;
     vec3 col = vec3(0.5);
-    vec2 gv = fract(uv * 5.0) - .5;
+    vec2 gv = fract(uv * iCount) - .5;
     //float d = length(gv);
     float m = 0.;
 
@@ -49,7 +52,7 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
             float d = length(gv + offs);
             //float r = 0.1;
             //m += smoothstep(r, r * 0.9, d);
-            float r = mix(0.3, 0.5, sin(iTime) * 0.5 + 0.5);
+            float r = mix(0.3, 0.5, sin(iTime + length(uv) * 39.) * 0.5 + 0.5);
             m += smoothstep(r, r * 0.9, d);
         }
     }
@@ -60,6 +63,41 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
     return vec4(col, 1.0);
 }
 ]])
+
+local sh4 = gr.newShader([[
+    #define S smoothstep
+
+    float Feather(vec2 p) {
+        //float d = length(p - vec2(clamp(p.x, -0., .3), clamp(p.y, -0., 0.3)));
+        float d = length(p - vec2(0., clamp(p.y, -0.35, 0.35)));
+        float r = mix(.1, .01, S(-0.3, .3, p.y));
+        float m = S(.001, .0, d - r);
+        float x = .9 * abs(p.x)/r;
+        float wave = (1. - x) * sqrt(x) + x * (1. - sqrt(1.-x));
+        float y = (p.y - wave*.2) * 40.;
+        float id = floor(y);
+        float n = fract(sin(id*564.)*845.);
+        float shade = mix(.3, .1, n);
+
+        float strand = S(.1, 0., abs(fract(y) - .5) - .3);
+
+        d = length(p - vec2(0., clamp(p.y, -0.45, 0.1)));
+        float stem = S(.01, .0, d);
+
+        return strand * m * shade + stem;
+    }
+
+    vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
+        //vec2 uv = (screen_coords - .5 * love_ScreenSize.xy) / love_ScreenSize.xy;
+        vec2 uv = (screen_coords - .5 * love_ScreenSize.xy) / love_ScreenSize.xy;
+        vec3 col = vec3(.0);
+        col += Feather(uv);
+        return vec4(col, 1.);
+    }
+]])
+
+local sh5 = gr.newShader("distortedtv.glsl")
+local img = gr.newImage("pic1.png")
 
 local w, h = gr.getDimensions()
 local vertices = {
@@ -97,6 +135,39 @@ local vertices = {
 }
 local mesh = gr.newMesh(vertices, "triangles", "static")
 
+local iCount = 10.
+
+love.update = function(dt)
+    local lk = love.keyboard
+    if lk.isDown("z") then
+        iCount = iCount + .1
+    elseif lk.isDown("x") then
+        iCount = iCount - .1
+    end
+end
+
+local currentShader
+
+love.keypressed = function(_, key)
+    if key == "1" then
+        currentShader = sh1
+    elseif key == "2" then
+        currentShader = sh2
+    elseif key == "3" then
+        currentShader = sh3
+    elseif key == "4" then
+        currentShader = sh4
+    elseif key == "5" then
+        currentShader = sh5
+    end
+end
+
+function safesend(shader, name, ...)
+    if shader:hasUniform(name) then
+        shader:send(name, ...)
+    end
+end
+
 love.draw = function()
     --gr.setColor{1, 1, 0, 1}
     --gr.clear(1, 1, 1)
@@ -106,9 +177,17 @@ love.draw = function()
     --gr.rectangle("fill", 0, 0, w, h)
 
     --gr.setShader(sh2)
-    sh3:send("iTime", love.timer.getTime())
-    gr.setShader(sh3);
-    gr.rectangle("fill", 0, 0, w, h)
+    
 
-    --gr.draw(mesh)
+    mesh:setTexture(img)
+
+    if currentShader then
+        safesend(currentShader, "iTime", love.timer.getTime())
+        safesend(currentShader, "iTex", img)
+        safesend(currentShader, "iCount", iCount)
+
+        gr.setShader(currentShader);
+    end
+    
+    gr.draw(mesh)
 end
