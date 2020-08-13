@@ -170,6 +170,12 @@ love.keypressed = function(_, key)
     elseif key == "7" then
         currentShader = sh7
     end
+
+    if key == "a" then
+        safesend(currentShader, "useFast", true)
+    elseif key == "z" then
+        safesend(currentShader, "useFast", false)
+    end
 end
 
 function safesend(shader, name, ...)
@@ -179,7 +185,7 @@ function safesend(shader, name, ...)
 end
 
 love.draw = function()
-    --gr.setColor{1, 1, 0, 1}
+    gr.setColor{1, 1, 1, 1}
     --gr.clear(1, 1, 1)
     local w, h = gr.getDimensions()
 
@@ -198,6 +204,9 @@ love.draw = function()
 
         gr.setShader(currentShader);
     end
-    
     gr.draw(mesh)
+    gr.setShader()
+
+    gr.setColor(0, 0, 1)
+    gr.print(string.format("fps %d", love.timer.getFPS()), 0, 0)
 end
