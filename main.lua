@@ -97,7 +97,13 @@ local sh4 = gr.newShader([[
 ]])
 
 local sh5 = gr.newShader("distortedtv.glsl")
+local sh6 = gr.newShader("beginner.glsl")
+local sh7 = gr.newShader("voronoi.glsl")
 local img = gr.newImage("pic1.png")
+
+--local file = io.open("pic1.png", "r")
+--local data = love.data.newByteData(file:read("*a"))
+--local img = gr.newImage(data)
 
 local w, h = gr.getDimensions()
 local vertices = {
@@ -159,6 +165,10 @@ love.keypressed = function(_, key)
         currentShader = sh4
     elseif key == "5" then
         currentShader = sh5
+    elseif key == "6" then
+        currentShader = sh6
+    elseif key == "7" then
+        currentShader = sh7
     end
 end
 
