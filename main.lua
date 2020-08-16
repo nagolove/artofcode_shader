@@ -99,6 +99,7 @@ local sh4 = gr.newShader([[
 local sh5 = gr.newShader("distortedtv.glsl")
 local sh6 = gr.newShader("beginner.glsl")
 local sh7 = gr.newShader("voronoi.glsl")
+local sh8 = gr.newShader("raymarch.glsl")
 local img = gr.newImage("pic1.png")
 
 --local file = io.open("pic1.png", "r")
@@ -169,6 +170,8 @@ love.keypressed = function(_, key)
         currentShader = sh6
     elseif key == "7" then
         currentShader = sh7
+    elseif key == "8" then
+        currentShader = sh8
     end
 
     if key == "a" then
