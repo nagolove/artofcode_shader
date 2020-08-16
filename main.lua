@@ -1,3 +1,5 @@
+local tween = require "tween"
+
 local gr = love.graphics
 local sh1 = gr.newShader([[
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
@@ -100,7 +102,11 @@ local sh5 = gr.newShader("distortedtv.glsl")
 local sh6 = gr.newShader("beginner.glsl")
 local sh7 = gr.newShader("voronoi.glsl")
 local sh8 = gr.newShader("raymarch.glsl")
+local sh9 = gr.newShader("torusknot.glsl")
 local img = gr.newImage("pic1.png")
+
+local twObject = { qTime = 0.5 }
+local tw = tween.new(30., twObject, { qTime = 1 }, "outBounce")
 
 --local file = io.open("pic1.png", "r")
 --local data = love.data.newByteData(file:read("*a"))
@@ -144,15 +150,6 @@ local mesh = gr.newMesh(vertices, "triangles", "static")
 
 local iCount = 10.
 
-love.update = function(dt)
-    local lk = love.keyboard
-    if lk.isDown("z") then
-        iCount = iCount + .1
-    elseif lk.isDown("x") then
-        iCount = iCount - .1
-    end
-end
-
 local currentShader
 
 love.keypressed = function(_, key)
@@ -172,6 +169,9 @@ love.keypressed = function(_, key)
         currentShader = sh7
     elseif key == "8" then
         currentShader = sh8
+    elseif key == "9" then
+        currentShader = sh9
+        tw = tween.new(30., twObject, { qTime = 1 }, "outBounce")
     end
 
     if key == "a" then
@@ -199,11 +199,14 @@ love.draw = function()
     
 
     mesh:setTexture(img)
-
+    local mx, my = love.mouse.getPosition()
     if currentShader then
         safesend(currentShader, "iTime", love.timer.getTime())
+        safesend(currentShader, "qTime", twObject.qTime)
         safesend(currentShader, "iTex", img)
         safesend(currentShader, "iCount", iCount)
+        safesend(currentShader, "iResolution", {w, h})
+        safesend(currentShader, "iMouse", {mx, my})
 
         gr.setShader(currentShader);
     end
@@ -213,3 +216,15 @@ love.draw = function()
     gr.setColor(0, 0, 1)
     gr.print(string.format("fps %d", love.timer.getFPS()), 0, 0)
 end
+
+love.update = function(dt)
+    print("twObject.qTime", twObject.qTime)
+    tw:update(dt)
+    local lk = love.keyboard
+    if lk.isDown("z") then
+        iCount = iCount + .1
+    elseif lk.isDown("x") then
+        iCount = iCount - .1
+    end
+end
+
