@@ -1,6 +1,7 @@
 uniform float iTime;
 uniform float qTime;
 uniform vec2 iMouse, iResolution;
+uniform vec3 lightPos, RayOrigin;
 
 #define MAX_STEPS 100
 #define MAX_DIST 100.
@@ -24,15 +25,59 @@ float sdBox(vec3 p, vec3 s) {
     return length(max(p, 0.))+min(max(p.x, max(p.y, p.z)), 0.);
 }
 
-float GetDist(vec3 p) {
+float sdBox2(vec3 p, vec3 s) {
+    p = abs(p)-s;
+    return length(max(p, 0.))+min(max(p.x, max(p.y, p.z)), 0.);
+}
+
+float sdSphere(vec3 p, vec3 s) {
+    p = abs(p)-s;
+    return length(max(p, 0.))+min(max(p.x, max(p.y, p.z)), 0.);
+}
+
+float GetDist3(vec3 p) {
     float r1 = 1., r2 = .2;
-    //float d = sdBox(p, vec3(1));
-    //float d = length(vec2(length(p.xz) - r1, p.y)) - r2;
+    float d = sdSphere(p, vec3(1));
+    //d = sdBox2(p, vec3(1));
+
+    d = length(vec2(length(p.xz) - r1, p.y)) - r2;
     vec2 cp = vec2(length(p.xz) - r1, p.y);
     float a = atan(p.x, p.z);
     cp *= Rot(a * qTime);
     cp.y = abs(cp.y) - .3;
-    float d = length(cp) - r2;
+    d = length(cp) - r2;
+    
+    return d;
+}
+
+float GetDist2(vec3 p) {
+    float r1 = 1., r2 = .2;
+    float d = sdBox(p, vec3(1));
+    //d = sdBox2(p, vec3(1));
+
+    d = length(vec2(length(p.xz) - r1, p.y)) - r2;
+    vec2 cp = vec2(length(p.xz) - r1, p.y);
+    float a = atan(p.x, p.z);
+    cp *= Rot(a * qTime);
+    cp.y = abs(cp.y) - .3;
+    d = length(cp) - r2;
+    
+    return d;
+}
+
+float GetDist(vec3 p) {
+    float r1 = 1., r2 = .2;
+    float d = sdBox(p, vec3(1));
+    //d = sdBox2(p, vec3(1));
+
+    /*
+     *d = length(vec2(length(p.xz) - r1, p.y)) - r2;
+     *vec2 cp = vec2(length(p.xz) - r1, p.y);
+     *float a = atan(p.x, p.z);
+     *cp *= Rot(a * qTime);
+     *cp.y = abs(cp.y) - .3;
+     *d = length(cp) - r2;
+     */
     
     return d;
 }
@@ -43,6 +88,32 @@ float RayMarch(vec3 ro, vec3 rd) {
     for(int i=0; i<MAX_STEPS; i++) {
         vec3 p = ro + rd*dO;
         float dS = GetDist(p);
+        dO += dS;
+        if(dO>MAX_DIST || abs(dS)<SURF_DIST) break;
+    }
+    
+    return dO;
+}
+
+float RayMarch2(vec3 ro, vec3 rd) {
+    float dO=0.;
+    
+    for(int i=0; i<MAX_STEPS; i++) {
+        vec3 p = ro + rd*dO;
+        float dS = GetDist2(p);
+        dO += dS;
+        if(dO>MAX_DIST || abs(dS)<SURF_DIST) break;
+    }
+    
+    return dO;
+}
+
+float RayMarch3(vec3 ro, vec3 rd) {
+    float dO=0.;
+    
+    for(int i=0; i<MAX_STEPS; i++) {
+        vec3 p = ro + rd*dO;
+        float dS = GetDist3(p);
         dO += dS;
         if(dO>MAX_DIST || abs(dS)<SURF_DIST) break;
     }
@@ -72,7 +143,52 @@ vec3 GetRayDir(vec2 uv, vec3 p, vec3 l, float z) {
     return d;
 }
 
+vec3 m1(vec2 uv, vec3 ro, vec3 rd) {
+    float d = RayMarch(ro, rd);
+    vec3 col = vec3(0.);
+    
+    if(d<MAX_DIST) {
+        vec3 p = ro + rd * d;
+        vec3 n = GetNormal(p);
+        
+        //float dif = dot(n, normalize(vec3(1,2,3)))*.5+.5;
+        float dif = dot(n, normalize(lightPos))*.5+.5;
+        col.r += dif;  
+    }
+    return col;
+}
 
+vec3 m2(vec2 uv, vec3 ro, vec3 rd) {
+    float d = RayMarch2(ro, rd);
+    vec3 col = vec3(0.);
+    
+    if(d<MAX_DIST) {
+        vec3 p = ro + rd * d;
+        vec3 n = GetNormal(p);
+        
+        //float dif = dot(n, normalize(vec3(1,2,3)))*.5+.5;
+        float dif = dot(n, normalize(lightPos))*.5+.5;
+        col += dif;  
+    }
+
+    return col;
+}
+
+vec3 m3(vec2 uv, vec3 ro, vec3 rd) {
+    float d = RayMarch3(ro, rd);
+    vec3 col = vec3(0.);
+    
+    if(d<MAX_DIST) {
+        vec3 p = ro + rd * d;
+        vec3 n = GetNormal(p);
+        
+        //float dif = dot(n, normalize(vec3(1,2,3)))*.5+.5;
+        float dif = dot(n, normalize(lightPos))*.5+.5;
+        col += dif;  
+    }
+
+    return col;
+}
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
     vec2 uv = (screen_coords - .5 * love_ScreenSize.xy) / love_ScreenSize.y;
@@ -80,22 +196,17 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
     
     vec3 col = vec3(0);
     
-    vec3 ro = vec3(0, 3, -3);
+    //vec3 ro = vec3(0, 3, -3);
+    vec3 ro = RayOrigin;
     ro.yz *= Rot(-m.y*3.14+1.);
     ro.xz *= Rot(-m.x*6.2831);
     
     vec3 rd = GetRayDir(uv, ro, vec3(0), 1.);
 
-    float d = RayMarch(ro, rd);
-    
-    if(d<MAX_DIST) {
-        vec3 p = ro + rd * d;
-        vec3 n = GetNormal(p);
-        
-        float dif = dot(n, normalize(vec3(1,2,3)))*.5+.5;
-        col += dif;  
-    }
-    
+    col += m1(uv, ro, rd);
+    col += m2(uv, ro, rd);
+    col += m3(uv, ro, rd);
+
     col = pow(col, vec3(.4545));	// gamma correction
     
     return vec4(col,1.0);
