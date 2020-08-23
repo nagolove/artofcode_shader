@@ -32,12 +32,12 @@ float sdBox2(vec3 p, vec3 s) {
 
 float sdSphere(vec3 p, vec3 s) {
     p = abs(p)-s;
-    return length(max(p, 0.))+min(max(p.x, max(p.y, p.z)), 0.);
+    return length(max(p, 0.));//+min(max(p.x, max(p.y, p.z)), 0.);
 }
 
 float GetDist3(vec3 p) {
     float r1 = 1., r2 = .2;
-    float d = sdSphere(p, vec3(1));
+    float d = sdSphere(p, vec3(1.5));
     //d = sdBox2(p, vec3(1));
 
     d = length(vec2(length(p.xz) - r1, p.y)) - r2;
@@ -67,7 +67,8 @@ float GetDist2(vec3 p) {
 
 float GetDist(vec3 p) {
     float r1 = 1., r2 = .2;
-    float d = sdBox(p, vec3(1));
+    float d = sdBox(p, vec3(1, 2, 0.1));
+
     //d = sdBox2(p, vec3(1));
 
     /*
@@ -184,7 +185,7 @@ vec3 m3(vec2 uv, vec3 ro, vec3 rd) {
         
         //float dif = dot(n, normalize(vec3(1,2,3)))*.5+.5;
         float dif = dot(n, normalize(lightPos))*.5+.5;
-        col += dif;  
+        col.r += dif;  
     }
 
     return col;
@@ -204,8 +205,8 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
     vec3 rd = GetRayDir(uv, ro, vec3(0), 1.);
 
     col += m1(uv, ro, rd);
-    col += m2(uv, ro, rd);
-    col += m3(uv, ro, rd);
+    //col += m2(uv, ro, rd);
+    //col += m3(uv, ro, rd);
 
     col = pow(col, vec3(.4545));	// gamma correction
     
