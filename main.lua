@@ -8,6 +8,7 @@ local progs = {}
 local lightPos = {1, 2, 3}
 local RayOrigin = {0, 3, -3}
 local selectedFile = 1
+local tex = love.graphics.newImage("assets/tex1.png")
 
 function findShaders()
     local files = love.filesystem.getDirectoryItems("")
@@ -147,6 +148,7 @@ love.draw = function()
         safesend(currentShader, "iCount", iCount)
         safesend(currentShader, "iResolution", {w, h})
         safesend(currentShader, "RayOrigin", RayOrigin)
+        safesend(currentShader, "tex", tex)
 
         if love.keyboard.isDown("lshift") then
             safesend(currentShader, "iMouse", {mx, my})

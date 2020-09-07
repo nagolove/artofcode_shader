@@ -1,4 +1,5 @@
 uniform vec2 iMouse;
+uniform Image tex;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
@@ -22,7 +23,8 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     }
 
     float f = iter / max_iter;
-    vec3 col = vec3(f);
+    //vec3 col = vec3(f);
+    vec3 col = texture2D(tex, vec2(f, .5)).rgb;
     return vec4(col, 1.0);
 }
 
