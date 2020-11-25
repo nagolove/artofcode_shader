@@ -26,6 +26,9 @@ function findShaders()
             if not ok then
                 table.insert(compilationErrors, filename .. ":" .. errmsg)
             end
+            if shader == nil then
+                shader = {}
+            end
             table.insert(progs, shader)
             table.insert(filteredFiles, v)
         end
@@ -138,10 +141,12 @@ function shadersSelector()
 end
 
 function clearCompilationErrors()
+    compilationErrors = {}
 end
 
 function compilationErrorsWindow()
-    if #compilationErrors ~= 0 then
+    --if #compilationErrors ~= 0 then
+    if true then
         imgui.Begin("compilation log", true, "ImGuiWindowFlags_AlwaysAutoResize")
 
         local ok = imgui.Button("clear")
@@ -177,7 +182,7 @@ love.draw = function()
 
     mesh:setTexture(img)
     local mx, my = love.mouse.getPosition()
-    if currentShader then
+    if currentShader and type(currentShader) ~= "table" then
         safesend(currentShader, "iTime", love.timer.getTime())
         safesend(currentShader, "qTime", twObject.qTime)
         safesend(currentShader, "iTex", img)
@@ -193,6 +198,8 @@ love.draw = function()
         safesend(currentShader, "lightPos", lightPos)
 
         gr.setShader(currentShader);
+    else
+        gr.setShader()
     end
     gr.draw(mesh)
     gr.setShader()
