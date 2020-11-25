@@ -7,6 +7,7 @@ uniform vec2 iMouse, iResolution;
 #define SURF_DIST .001
 
 #define S smoothstep
+_
 
 mat2 Rot(float a) {
     float s=sin(a), c=cos(a);

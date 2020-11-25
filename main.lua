@@ -10,12 +10,23 @@ local RayOrigin = {0, 3, -3}
 local selectedFile = 1
 local tex = love.graphics.newImage("assets/tex1.png")
 
+local compilationErrors = {}
+
 function findShaders()
-    local files = love.filesystem.getDirectoryItems("")
+    local shaderDirectory = "shaders"
+    local files = love.filesystem.getDirectoryItems(shaderDirectory)
     local filteredFiles = {}
     for k, v in pairs(files) do
         if v:match(".*%.glsl") then
-            table.insert(progs, gr.newShader(v))
+            local shader
+            local filename = shaderDirectory .. "/" .. v
+            local ok, errmsg = pcall(function()
+                shader = gr.newShader(filename)
+            end)
+            if not ok then
+                table.insert(compilationErrors, filename .. ":" .. errmsg)
+            end
+            table.insert(progs, shader)
             table.insert(filteredFiles, v)
         end
 
@@ -115,16 +126,41 @@ function lightSetup()
     end
 end
 
-function ui()
+function shadersSelector()
     imgui.Begin("programs", true, "ImGuiWindowFlags_AlwaysAutoResize")
     local num, selected = imgui.ListBox("programs", selectedFile, files, #files, 5)
     if selected then
         selectShader(num)
     end
-
     lightSetup()
     RayOriginSetup()
     imgui.End()
+end
+
+function clearCompilationErrors()
+end
+
+function compilationErrorsWindow()
+    if #compilationErrors ~= 0 then
+        imgui.Begin("compilation log", true, "ImGuiWindowFlags_AlwaysAutoResize")
+
+        local ok = imgui.Button("clear")
+        if ok then
+            clearCompilationErrors()
+        end
+        for k, v in pairs(compilationErrors) do
+            imgui.TextColored(1,0.5,1,1, v);
+        end
+
+        imgui.End()
+    end
+end
+
+function ui()
+    shadersSelector()
+
+    compilationErrorsWindow()
+
     imgui.Render()
 end
 
