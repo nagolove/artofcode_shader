@@ -36,8 +36,11 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
         vec2 cellID = vec2(0.);
         //col.rg = gv;
         //col.rg = id * .1;
-        for (float y = -1.; y <= 1.; y++) {
-            for (float x = -1.; x <= 1.; x++) {
+        //for (float y = -1.; y <= 1.; y++) {
+            //for (float x = -1.; x <= 1.; x++) {
+        for (float y = -1.; y <= 1.; y += 0.3) {
+            for (float x = -1.; x <= 1.; x += 0.3) {
+                /*
                 vec2 offs = vec2(x, y);
                 vec2 n = N22(id + offs);
                 vec2 p = offs + sin(n * t) * .5;
@@ -45,6 +48,20 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
                 float ed = length(gv - p);
                 float md = abs(p.x) + abs(p.y);
                 float d = mix(ed, md, .5);
+
+                if (d < minDist) {
+                    minDist = d;
+                    cellID = id + offs;
+                }
+                */
+
+                vec2 offs = vec2(x, y);
+                vec2 n = N22(id + offs);
+                vec2 p = offs + sin(n * t) * .5;
+                //p -= gv;
+                //float ed = length(gv - p);
+                //float md = abs(p.x) + abs(p.y);
+                float d = length(gv - p);
 
                 if (d < minDist) {
                     minDist = d;
